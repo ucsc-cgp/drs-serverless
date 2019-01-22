@@ -1,8 +1,6 @@
 import drs
 
-
 app = drs.create_app()
-
 
 if __name__ == '__main__':
     # This is used when running locally. Gunicorn is used to run the

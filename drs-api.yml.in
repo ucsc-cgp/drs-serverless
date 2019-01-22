@@ -1,20 +1,13 @@
-# [START swagger]
 swagger: "2.0"
 info:
-  description: "A simple Google Cloud Endpoints API example."
-  title: "Endpoints Example"
+  description: "An aspirationally DRS interface to the HCA DSS."
+  title: "DRS Serverless"
   version: "1.0.0"
-host: "platform-dev-178517.appspot.com"
-# [END swagger]
-consumes:
-- "application/json"
-produces:
-- "application/json"
-schemes:
-- "https"
+host:
 paths:
   /echo:
     post:
+      operationId: drs.api.echo.post
       description: "Echo back a given message."
       produces:
       - "application/json"
