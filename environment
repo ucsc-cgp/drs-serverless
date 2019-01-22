@@ -1,0 +1,3 @@
+set -a
+API_DOMAIN_NAME=platform-dev-178517.appspot.com
+set +a
