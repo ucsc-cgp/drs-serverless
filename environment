@@ -1,3 +1,24 @@
+# DRS Serverless environment variables
+#
+# Source this file in your bash shell using "source environment".
+#
+# The environment variables set in this file are appropriate for the
+# DRS Serverless development environment.
+
+# Resolve the location of this file and set DRS_HOME to the root
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+export DRS_HOME="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+EXPORT_ENV_VARS_TO_APPENGINE_ARRAY=(
+	DRS_API_VERSION
+)
+
 set -a
-API_DOMAIN_NAME=platform-dev-178517.appspot.com
+EXPORT_ENV_VARS_TO_APPENGINE=${EXPORT_ENV_VARS_TO_APPENGINE_ARRAY[*]}
+GCP_DEFAULT_REGION=us-central
+GCP_PROJECT=platform-dev-178517
+DRS_APPENGINE_SERVICE_NAME=drs-serverless
+DRS_APPENGINE_SERVICE_VERSION="27182"
+DRS_API_VERSION="v1"
 set +a
