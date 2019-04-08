@@ -23,7 +23,7 @@ $(tests): %.py : mypy lint
 create:
 	gcloud app create --project=${GCP_PROJECT} --region=${GCP_DEFAULT_REGION}
 
-deploy: deploy-cloud-endpoints deploy-appengine
+deploy: deploy-endpoints deploy-appengine
 
 deploy-endpoints:
 	$(MAKE) -C endpoints
