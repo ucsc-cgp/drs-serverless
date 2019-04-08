@@ -23,6 +23,7 @@ def unexpected_error(e):
 
 def create_app():
     app = connexion.FlaskApp(__name__)
-    app.add_api("../drs-api.yml", base_path=os.environ['DRS_API_VERSION'], resolver=RestyResolver("drs.api"))
+    base_path=f"/{os.environ['DRS_API_VERSION']}"
+    app.add_api("../drs-api.yml", base_path=base_path, resolver=RestyResolver("drs.api"))
     app.add_error_handler(Exception, unexpected_error)
     return app

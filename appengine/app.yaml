@@ -1,0 +1,6 @@
+runtime: python37
+entrypoint: gunicorn -b :$PORT main:app
+service: drs-serverless
+env_variables:
+  DRS_API_VERSION: v1
+  DRS_APPENGINE_SERVICE_NAME: drs-serverless
