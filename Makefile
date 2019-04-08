@@ -25,30 +25,14 @@ create:
 
 deploy: deploy-cloud-endpoints deploy-appengine
 
-deploy-cloud-endpoints: drs-api.yml
-	gcloud endpoints services deploy drs-api.yml
+deploy-endpoints:
+	$(MAKE) -C endpoints
 
-deploy-appengine: app.yaml
-	gcloud app deploy \
-		-v ${DRS_APPENGINE_SERVICE_VERSION} \
-		--quiet \
-		--project ${GCP_PROJECT} app.yaml
-	@gcloud app versions describe \
-		${DRS_APPENGINE_SERVICE_VERSION} \
-		--service=${DRS_APPENGINE_SERVICE_NAME} \
-		--format json \
-		| jq -r .versionUrl
-
-drs-api.yml:
-	cat drs-api.yml.in | yq . | jq --arg host "${GCP_PROJECT}.appspot.com" '.host=$$host' | yq -y . | sponge drs-api.yml
-
-app.yaml:
-	cat app.yaml.in | yq . | jq --arg service ${DRS_APPENGINE_SERVICE_NAME} '.service=$$service' | yq -y . | sponge app.yaml
+deploy-appengine:
+	$(MAKE) -C appengine
 
 clean:
-	rm -rf app.yaml drs-api.yml
-	git clean -Xdf $(MODULES)
-	git checkout $$(git status --porcelain {chalice,daemons/*}/.chalice/config.json | awk '{print $$2}')
+	git clean -Xdf appengine endpoints
+	git checkout $$(git status --porcelain appengine/app.yaml | awk '{print $$2}')
 
-.PHONY: all lint mypy $(tests) test deploy deploy-cloud-endpoints deploy-appengine clean
-.PHONY: drs-api.yml app.yaml
+.PHONY: all lint mypy $(tests) test deploy deploy-endpoints deploy-appengine clean

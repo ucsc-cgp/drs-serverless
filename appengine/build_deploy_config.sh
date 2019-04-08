@@ -7,10 +7,10 @@ if [[ -z $DRS_HOME ]]; then
     exit 1
 fi
 
-#EXPORT_ENV_VARS_TO_APPENGINE=${EXPORT_ENV_VARS_TO_APPENGINE_ARRAY[*]}
-for var in ${EXPORT_ENV_VARS_TO_APPENGINE}; do
-    echo env.${var}
-done
+cat ../drs-api.yml \
+    | yq . \
+    | jq --arg host "${API_DOMAIN_NAME}" '.host=$host' \
+    | yq -y . | sponge drs-api.yml
 
 cat app.yaml \
     | yq . \

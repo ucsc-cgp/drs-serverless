@@ -7,9 +7,7 @@ if [[ -z $DRS_HOME ]]; then
     exit 1
 fi
 
-api_domain_name="${DRS_APPENGINE_SERVICE_VERSION}-dot-${DRS_APPENGINE_SERVICE_NAME}-dot-${GCP_PROJECT}.appspot.com"
-
 cat ../drs-api.yml \
     | yq . \
-    | jq --arg host "${api_domain_name}" '.host=$host' \
+    | jq --arg host "${API_DOMAIN_NAME}" '.host=$host' \
     | yq -y . | sponge drs-api.yml

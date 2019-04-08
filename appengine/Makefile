@@ -1,10 +1,8 @@
 include ../common.mk
 
 deploy:
-	cp -R ../drs ../requirements.txt .
+	cp -R ../drs-api.yml ../drs ../requirements.txt .
 	./build_deploy_config.sh
-
-bar:
 	gcloud app deploy \
 		-v ${DRS_APPENGINE_SERVICE_VERSION} \
 		--quiet \
