@@ -3,7 +3,7 @@ info:
   description: "An aspirationally DRS interface to the HCA DSS."
   title: "DRS Serverless"
   version: "1.0.0"
-host:
+host: test
 paths:
   /echo:
     post:

@@ -6,6 +6,7 @@ Functional Test of the API
 """
 import os
 import sys
+import json
 import unittest
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
@@ -18,22 +19,23 @@ class TestApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.app = drs.create_app()
-        cls.app.run(host="127.0.0.1", port="8080", debug=True)
-        client = cls.app.test_client()
+        cls.app.app.config['TESTING'] = True
+        cls.client = cls.app.app.test_client()
 
     @classmethod
     def tearDownClass(cls):
         pass
 
     def test_nothing(self):
-        r = self.client.post(
-            '/echo',
-            data='{"message": "Hello"}',
+        message = {"message": "Hello"}
+        resp = self.client.post(
+            '/v1/echo',
+            data=json.dumps(message),
             headers={
                 'Content-Type': 'application/json'
-            })
-
-        pass
+            }
+        )
+        self.assertEqual(message, resp.json['the message'])
 
 if __name__ == '__main__':
     unittest.main()
