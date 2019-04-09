@@ -25,6 +25,7 @@ paths:
           $ref: "#/definitions/echoMessage"
   /files/{uuid}:
     head:
+      operationId: drs.api.files.head
       summary: Retrieve a file's metadata given an UUID and optionally a version.
       description: >
         Given a file UUID, return the metadata for the latest version of that file.  If the version is provided, that
@@ -85,6 +86,7 @@ paths:
         504:
           $ref: '#/responses/GatewayTimeout'
     get:
+      operationId: drs.api.files.get
       summary: Retrieve a file given a UUID and optionally a version.
       description: >
         Given a file UUID, return the latest version of that file.  If the version is provided, that version of the file
@@ -193,6 +195,7 @@ paths:
                 required:
                   - code
     put:
+      operationId: drs.api.files.put
       summary: Create a new version of a file
       description: >
         Create a new version of a file with a given UUID. The contents of the file are provided by the client by
