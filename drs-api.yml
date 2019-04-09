@@ -4,25 +4,12 @@ info:
   title: "DRS Serverless"
   version: "1.0.0"
 host: test
+schemes:
+  - https
+basePath: /v1
+produces:
+  - application/json
 paths:
-  /echo:
-    post:
-      operationId: drs.api.echo.post
-      description: "Echo back a given message."
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "Echo"
-          schema:
-            $ref: "#/definitions/echoMessage"
-      parameters:
-      - description: "Message to echo"
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: "#/definitions/echoMessage"
   /files/{uuid}:
     head:
       operationId: drs.api.files.head
@@ -332,11 +319,6 @@ paths:
                   - code
 
 definitions:
-  echoMessage:
-    type: "object"
-    properties:
-      message:
-        type: "string"
   File:
     type: object
     properties:
