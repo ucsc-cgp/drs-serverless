@@ -23,6 +23,315 @@ paths:
         required: true
         schema:
           $ref: "#/definitions/echoMessage"
+  /files/{uuid}:
+    head:
+      summary: Retrieve a file's metadata given an UUID and optionally a version.
+      description: >
+        Given a file UUID, return the metadata for the latest version of that file.  If the version is provided, that
+        version's metadata is returned instead.  The metadata is returned in the headers.
+
+      parameters:
+        - name: uuid
+          in: path
+          description: A RFC4122-compliant ID for the file.
+          required: true
+          type: string
+        - name: version
+          in: query
+          description: Timestamp of file creation in DSS_VERSION format.  If this is not provided, the latest version is returned.
+          required: false
+          type: string
+      responses:
+        200:
+          description: Returns metadata
+          headers:
+            # edits to here should probably be reflected in the 302 section immediately below.
+            X-DSS-CREATOR-UID:
+              description: User ID who created this file.
+              type: integer
+              format: int64
+            X-DSS-VERSION:
+              description: Timestamp of file creation in DSS_VERSION format.
+              type: string
+            X-DSS-CONTENT-TYPE:
+              description: Content-type of the file.
+              type: string
+            X-DSS-SIZE:
+              description: File size (bytes).
+              type: integer
+              format: int64
+            X-DSS-CRC32C:
+              description: CRC-32C (in hex format) of the file contents in hex.
+              type: string
+              pattern: "^[a-z0-9]{8}$"
+            X-DSS-S3-ETAG:
+              description: S3 ETag (in hex format) of the file contents.
+              type: string
+              pattern: "^[a-z0-9]{32}(-([2-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|10000))?$"
+            X-DSS-SHA1:
+              description: SHA-1 (in hex format) of the file contents in hex.
+              type: string
+              pattern: "^[a-z0-9]{40}$"
+            X-DSS-SHA256:
+              description: SHA-256 (in hex format) of the file contents in hex.
+              type: string
+              pattern: "^[a-z0-9]{64}$"
+        500:
+          $ref: '#/responses/ServerError'
+        502:
+          $ref: '#/responses/BadGateway'
+        503:
+          $ref: '#/responses/ServiceUnavailable'
+        504:
+          $ref: '#/responses/GatewayTimeout'
+    get:
+      summary: Retrieve a file given a UUID and optionally a version.
+      description: >
+        Given a file UUID, return the latest version of that file.  If the version is provided, that version of the file
+        is returned instead.
+
+        Headers will contain the data store metadata for the file.
+
+        This endpoint returns a HTTP redirect to another HTTP endpoint with the file contents.
+      parameters:
+        - name: uuid
+          in: path
+          description: A RFC4122-compliant ID for the file.
+          required: true
+          type: string
+          pattern: "[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}"
+        - name: version
+          in: query
+          description: Timestamp of file creation in DSS_VERSION format.  If this is not provided, the latest version is returned.
+          required: false
+          type: string
+        - name: token
+          in: query
+          description: Token to manage retries.  End users constructing queries should not set this parameter.
+          required: false
+          type: string
+      responses:
+        301:
+          description: >
+            The file is still being fetched. The request is being handled asynchronously. The client should follow the
+            redirect after the delay specified in the Retry-After header.
+          headers:
+            Retry-After:
+              description: Delay in seconds. The client should follow the redirect after waiting for this duration.
+              type: integer
+              format: int64
+        302:
+          description: Redirects to a signed URL with the data.
+          headers:
+            # edits to here should probably be reflected in the 200 section above.
+            X-DSS-CREATOR-UID:
+              description: User ID who created this file.
+              type: integer
+              format: int64
+            X-DSS-VERSION:
+              description: Timestamp of file creation in DSS_VERSION format.
+              type: string
+              format: DSS_VERSION
+            X-DSS-CONTENT-TYPE:
+              description: Content-type of the file.
+              type: string
+            X-DSS-SIZE:
+              description: File size (bytes).
+              type: integer
+              format: int64
+            X-DSS-CRC32C:
+              description: CRC-32C (in hex format) of the file contents in hex.
+              type: string
+              pattern: "^[a-z0-9]{8}$"
+            X-DSS-S3-ETAG:
+              description: S3 ETag (in hex format) of the file contents.
+              type: string
+              pattern: "^[a-z0-9]{32}(-([2-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|10000))?$"
+            X-DSS-SHA1:
+              description: SHA-1 (in hex format) of the file contents in hex.
+              type: string
+              pattern: "^[a-z0-9]{40}$"
+            X-DSS-SHA256:
+              description: SHA-256 (in hex format) of the file contents in hex.
+              type: string
+              pattern: "^[a-z0-9]{64}$"
+        400:
+          description: Bad request
+          schema:
+            allOf:
+              - $ref: '#/definitions/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    description: >
+                      Machine-readable error code.  The types of return values should not be changed lightly.
+
+                      The code `illegal_token` is returned when the token parameter cannot be understood.
+                    enum: [illegal_token]
+                required:
+                  - code
+        500:
+          $ref: '#/responses/ServerError'
+        502:
+          $ref: '#/responses/BadGateway'
+        503:
+          $ref: '#/responses/ServiceUnavailable'
+        504:
+          $ref: '#/responses/GatewayTimeout'
+        default:
+          description: Unexpected error
+          schema:
+            allOf:
+              - $ref: '#/definitions/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    description: Machine-readable error code.  The types of return values should not be changed lightly.
+                    enum: [unhandled_exception, illegal_arguments, not_found]
+                required:
+                  - code
+    put:
+      summary: Create a new version of a file
+      description: >
+        Create a new version of a file with a given UUID. The contents of the file are provided by the client by
+        reference using a cloud object storage URL. The file on the cloud object storage service must have metadata set
+        listing the file checksums and content-type.
+
+        The metadata fields required are:
+
+        - hca-dss-sha256: SHA-256 checksum of the file
+        - hca-dss-sha1: SHA-1 checksum of the file
+        - hca-dss-s3_etag: S3 ETAG checksum of the file.  See
+        https://stackoverflow.com/questions/12186993/what-is-the-algorithm-to-compute-the-amazon-s3-etag-for-a-file-larger-than-5gb
+        for the general algorithm for how checksum is calculated.  For files smaller than 64MB, this is the MD5 checksum
+        of the file.  For files larger than 64MB but smaller than 640,000MB, we use 64MB chunks.  For files larger than
+        640,000MB, we use a chunk size equal to the total file size divided by 10000, rounded up to the nearest MB.
+        MB, in this section, refers to 1,048,576 bytes.  Note that 640,000MB is not the same as 640GB!
+        - hca-dss-crc32c: CRC-32C checksum of the file
+      parameters:
+        - name: uuid
+          in: path
+          description: A RFC4122-compliant ID for the file.
+          required: true
+          type: string
+          pattern: "[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}"
+        - name: version
+          in: query
+          description: Timestamp of file creation in DSS_VERSION format.  If this is not provided, the latest version is returned.
+          required: true
+          type: string
+          format: DSS_VERSION
+        - name: json_request_body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              source_url:
+                description: Cloud bucket URL for source data.  Example is "s3://bucket_name/serious_dna.fa" .
+                type: string
+                pattern: "^(gs|s3|wasb)://"
+              creator_uid:
+                description: User ID who is creating this file.
+                type: integer
+                format: int64
+            required:
+              - source_url
+              - creator_uid
+      responses:
+        200:
+          description: Returned when the file is already present and is identical to the file being uploaded.
+          schema:
+            type: object
+            properties:
+              version:
+                description: Timestamp of file creation in DSS_VERSION format.
+                type: string
+                format: DSS_VERSION
+            required:
+              - version
+        201:
+          description: Returned when the file is successfully copied.
+          schema:
+            type: object
+            properties:
+              version:
+                description: Timestamp of file creation in DSS_VERSION format.
+                type: string
+                format: DSS_VERSION
+            required:
+              - version
+        400:
+          description: Returned when the server could not process the request.  Examine the code for more details.
+          schema:
+            allOf:
+              - $ref: '#/definitions/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    description: >
+                      Machine-readable error code.  The types of return values should not be changed lightly.
+
+                      The code `unknown_source_schema` is returned when the source_url of the file has an unsupported
+                      schema.
+
+                      The code `illegal_version` is returned when version is not a DSS_VERSION format-compliant timestamp.
+                    enum: [unknown_source_schema, illegal_version]
+                required:
+                  - code
+        409:
+          description: Returned when a file with the same UUID and version already exists
+          schema:
+            allOf:
+              - $ref: '#/definitions/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    description: Machine-readable error code.  The types of return values should not be changed lightly.
+                    enum: [file_already_exists]
+                required:
+                  - code
+        422:
+          description: Returned when a request cannot be processed due to invalid values in a supplied entity.
+          schema:
+            allOf:
+              - $ref: '#/definitions/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    description: Machine-readable error code.  The types of return values should not be changed lightly.
+
+                      The code `missing_checksum` is returned when the file uploaded is missing a required checksum.
+
+                    enum: [missing_checksum]
+                required:
+                - code
+        500:
+          $ref: '#/responses/ServerError'
+        502:
+          $ref: '#/responses/BadGateway'
+        503:
+          $ref: '#/responses/ServiceUnavailable'
+        504:
+          $ref: '#/responses/GatewayTimeout'
+        default:
+          description: Unexpected error
+          schema:
+            allOf:
+              - $ref: '#/definitions/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    description: Machine-readable error code.  The types of return values should not be changed lightly.
+                    enum: [unhandled_exception, Forbidden, Unauthorized, illegal_arguments, read_only]
+                required:
+                  - code
 
 definitions:
   echoMessage:
@@ -30,3 +339,134 @@ definitions:
     properties:
       message:
         type: "string"
+  File:
+    type: object
+    properties:
+      uuid:
+        type: string
+        description: File unique ID
+        pattern: "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}"
+      name:
+        type: string
+        description: Filename (unique within a bundle)
+      versions:
+        type: array
+        description: List of versions
+        items:
+          type: string
+    required:
+      - uuid
+      - name
+      - versions
+  file_version:
+    type: object
+    description: Object describing a single file in the files list of a bundle.
+    properties:
+      name:
+        type: string
+        description: Filename (unique within a bundle)
+      content-type:
+        type: string
+        description: Content-type of the file.
+      indexed:
+        type: boolean
+        description: True if this file is to be indexed.
+      url:
+        description: Direct access or presigned URL, if requested.
+        type: string
+      uuid:
+        type: string
+        description: A RFC4122-compliant ID for the file.
+        pattern: "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}"
+      version:
+        type: string
+        format: DSS_VERSION
+        description: Timestamp of bundle creation in DSS_VERSION format.
+      size:
+        type: integer
+        format: int64
+        description: File size (bytes).
+      crc32c:
+        type: string
+        description: CRC-32C (in hex format) of the file contents in hex.
+        pattern: "^[a-z0-9]{8}$"
+      s3_etag:
+        type: string
+        description: S3 ETag (in hex format) of the file contents.
+        pattern: "^[a-z0-9]{32}(-([2-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|10000))?$"
+      sha1:
+        type: string
+        description: SHA-1 (in hex format) of the file contents in hex.
+        pattern: "^[a-z0-9]{40}$"
+      sha256:
+        type: string
+        description: SHA-256 (in hex format) of the file contents in hex.
+        pattern: "^[a-z0-9]{64}$"
+    required:
+      - name
+      - content-type
+      - indexed
+      - uuid
+      - version
+      - size
+      - crc32c
+      - s3_etag
+      - sha1
+      - sha256
+  Error:
+    type: object
+    properties:
+      status:
+        type: integer
+        format: int32
+        description: HTTP error code.
+      code:
+        type: string
+        description: >
+          Machine-readable error code.  The types of return values should not be changed lightly.  Individual endpoints
+          should list an enumeration of possible return codes.  All endpoints should expect the possibility of the
+          return code `unhandled_exception` and `illegal_arguments`.
+      title:
+        type: string
+        description: Human-readable error code.
+      stacktrace:
+        type: string
+        description: Exception stacktrace, if any.
+    required:
+      # once we fix up all the existing endpoints, we can add 'code' to the set of required fields.
+      - title
+  FilesGetResponse:
+    type: object
+    properties:
+      files:
+        type: string
+
+responses:
+  ServerError:
+    description: Server Error.
+    headers:
+      Retry-After:
+        description: Delay in seconds, service clients should retry after the delay.
+        type: integer
+        format: int64
+  BadGateway:
+    description: Bad Gateway.
+    headers:
+      Retry-After:
+        description: Delay in seconds, service clients should retry after the delay.
+        type: integer
+        format: int64
+  ServiceUnavailable:
+    description: Service Unavailable.
+    headers:
+      Retry-After:
+        description: Delay in seconds, service clients should retry after the delay.
+        type: integer
+        format: int64
+  GatewayTimeout:
+    description: Gateway Timeout.
+    headers:
+      Retry-After:
+        description: Delay in seconds, service clients should retry after the delay.
+        type: integer
+        format: int64

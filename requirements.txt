@@ -2,3 +2,7 @@ connexion==1.5.3
 gunicorn
 flask_cors
 pytest
+google-cloud-storage
+cloud-blobstore
+dcplib
+iso8601
