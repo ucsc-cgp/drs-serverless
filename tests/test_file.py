@@ -113,7 +113,7 @@ class TestFileApi(unittest.TestCase):
         version = datetime_to_version_format(datetime.datetime.utcnow())
         latest_version = datetime_to_version_format(datetime.datetime.utcnow())
         self._put_file(source_url, uuid, version)
-        self._put_file(source_url, uuid, latest_version)
+        resp = self._put_file(source_url, uuid, latest_version)
 
         with self.subTest("Get specific file"):
             resp = self.client.get(

@@ -59,7 +59,8 @@ def get_helper(uuid: str, version: str = None, token: str = None):
     blob_path = compose_blob_key(file_metadata)
 
     if request.method == "GET":
-        response = redirect(handle.generate_presigned_GET_url(bucket, blob_path))
+        url = f"https://storage.googleapis.com/{bucket}/{blob_path}"
+        response = redirect(url)
     else:
         response = make_response('', 200)
 
